@@ -1,7 +1,3 @@
---SELECT *
---FROM PortifolioProject..CovidVaccinations$
---ORDER BY 3,4
-
 SELECT *
 FROM PortifolioProject..CovidDeaths$
 WHERE continent IS NOT NULL
@@ -19,7 +15,7 @@ WHERE location like 'Brazil'
 ORDER BY location, date
 
 -- Looking at Total Cases vs Population
--- Shows what percentage of population got Covid in Brazil
+-- Shows what percentage of population got Covid
 
 SELECT location, date, population, total_cases, (total_cases/population)*100 as "COVID Infected Percentage"
 FROM PortifolioProject..CovidDeaths$
@@ -27,10 +23,19 @@ WHERE location like 'Brazil'
 ORDER BY location, date
 
 -- Looking at Countries with Highest Infection Rate compared to Population
+-- This Query will be use with Tableau Visualization
 
 SELECT location, population, MAX(total_cases) as "Highest_Infection_Count", MAX((total_cases/population))*100 as "COVID_Percentage"
 FROM PortifolioProject..CovidDeaths$
+WHERE continent IS NOT NULL
 GROUP BY location, population
+ORDER BY COVID_Percentage DESC
+
+-- This Query will be use with Tableau Visualization
+
+SELECT location, population, date, MAX(total_cases) as "Highest_Infection_Count", MAX((total_cases/population))*100 as "COVID_Percentage"
+FROM PortifolioProject..CovidDeaths$
+GROUP BY location, population, date
 ORDER BY COVID_Percentage DESC
 
 -- Showing Countries with Highest Death Count per Population
@@ -44,24 +49,26 @@ ORDER BY Total_Death_Count DESC
 -- LET'S BREAK THINGS DOWN BY CONTINENT
 
 -- Showing the continents with the higest death count per population
-
-SELECT continent, MAX(cast(total_deaths as int)) as "Total_Death_Count"
+-- This Query will be use with Tableau Visualization
+	
+SELECT location, MAX(cast(total_deaths as int)) as "Total_Death_Count"
 FROM PortifolioProject..CovidDeaths$
-WHERE continent IS NOT NULL
-GROUP BY continent
+WHERE continent IS NULL AND location NOT IN ('World', 'European Union', 'International')
+GROUP BY location
 ORDER BY Total_Death_Count DESC
 
 
 -- GLOBAL NUMBERS
 
-SELECT date, SUM(new_cases) as "New_Cases", SUM(cast(new_deaths as int)) as "New_Deaths" , SUM(cast(new_deaths as int))/SUM(new_cases)*100 as "Death Percentage"
+-- This Query will be use with Tableau Visualization
+
+SELECT SUM(new_cases) as "New_Cases", SUM(cast(new_deaths as int)) as "New_Deaths" , SUM(cast(new_deaths as int))/SUM(new_cases)*100 as "Death Percentage"
 FROM (SELECT location, date, MAX(new_cases) as "New_Cases", MAX(cast(new_deaths as int)) as "New_Deaths"
 	  FROM PortifolioProject..CovidDeaths$
 	  WHERE continent IS NOT NULL
 	  GROUP BY location, date) d
 
-GROUP BY date
-ORDER BY date, New_Cases
+ORDER BY New_Cases, New_Deaths
 
 -- Looking at total population VS Vaccinations
 
@@ -150,5 +157,6 @@ FROM (SELECT continent, location, date, MAX(population) as population
 
 JOIN PortifolioProject..CovidVaccinations$ v 
 ON d.location = v.location AND d.date = v.date
+
 
 WHERE d.continent IS NOT NULL
